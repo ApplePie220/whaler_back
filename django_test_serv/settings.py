@@ -15,6 +15,11 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# команда для запуска монги
+# docker run --name mongodb -d -p 27017:27017 --restart=unless-stopped -v mongodb_config:/data/configdb -v mongodb_data:/data/db mongo --auth
+# для подключения к контейнеру: docker exec -it mongodb bash
+# для подключения уже к монге: mongosh
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -23,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-hg5-%j-mi06e3l%7ol7u5spes9^ry4q0s2d5uucf@y&4fake&w'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '46.138.176.151']
 # ALLOWED_HOSTS = []
@@ -57,11 +62,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'django_test_serv.urls'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost",
-    "http://127.0.0.1",
-    "http://46.138.176.151"# Укажите здесь ваш фронтенд домен
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost",
+#     "http://127.0.0.1",
+#     "http://46.138.176.151"# Укажите здесь ваш фронтенд домен
+# ]
 
 TEMPLATES = [
     {
@@ -97,9 +102,14 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'whaler_db',
+        'NAME': 'db',
+        'ENFORCE_SCHEMA': False,
         'CLIENT': {
-           'host': 'mongodb://localhost:27017/',
+            'host': 'mongodb://localhost:27017/',
+            'username': 'username',
+            'password': 'password',
+            'authSource': 'admin',
+            'authMechanism': 'SCRAM-SHA-256'
         }
     }
 }

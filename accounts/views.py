@@ -3,8 +3,8 @@ from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import User, File
-from .serialaizer import UserSerializer, FileSerializer
+from .serialaizer import UserSerializer
+import logging
 
 
 # class UserViewSet(viewsets.ModelViewSet):
@@ -14,22 +14,28 @@ from .serialaizer import UserSerializer, FileSerializer
 
 @api_view(['POST'])
 def createUser(request):
-    user_data = request.data.get('user')
-    # file_data = request.data.get('files')
+    try:
+        user_data = {
+            'login': request.data.get('login'),
+            'password': request.data.get('password')  # Хешируем пароль
+        }
+        # file_data = request.data.get('files')
 
-    user_serializer = UserSerializer(data=user_data)
-    if user_serializer.is_valid():
-        user_serializer.save()
-        # user = user_serializer.instance
+        user_serializer = UserSerializer(data=user_data)
+        if user_serializer.is_valid():
+            user_serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        else:
+            errors = []
+            for field, messages in user_serializer.errors.items():
+                for message in messages:
+                    errors.append(f"{field}: {message}")
+                    logging.error(errors)
+            return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        # file_serializers = [FileSerializer(data=file) for file in file_data]
-        # for file_serializer in file_serializers:
-        #     if file_serializer.is_valid():
-        #         file_serializer.save(user=user)
-
-        return Response(status=status.HTTP_201_CREATED)
-
-    return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logging.error(f"An error occurred: {str(e)}")
+        return Response({"error": "An unexpected error occurred. Please try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # class FileViewSet(viewsets.ModelViewSet):
