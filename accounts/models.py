@@ -7,6 +7,7 @@ from djongo import models
 class User(models.Model):
     user_id = models.AutoField(primary_key=True)
     login = models.CharField(max_length=40, unique=True)
+    email = models.EmailField(max_length=80)
     password = models.CharField(max_length=80)
 
     def set_password(self, raw_password):

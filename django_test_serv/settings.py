@@ -62,11 +62,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'django_test_serv.urls'
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost",
-#     "http://127.0.0.1",
-#     "http://46.138.176.151"# Укажите здесь ваш фронтенд домен
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://127.0.0.1",
+    "http://192.168.1.3"# Укажите здесь ваш фронтенд домен
+]
 
 TEMPLATES = [
     {
