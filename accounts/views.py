@@ -20,11 +20,11 @@ class UserView(APIView):
 
     def get(self, request):
         try:
-            login = request.GET.get('login')
+            email = request.GET.get('email')
             password = request.GET.get('password')
 
             # Проверяем, существует ли пользователь с таким логином
-            user = User.objects.filter(login=login).first()
+            user = User.objects.filter(email=email).first()
 
             if user:
                 # Проверяем, верен ли введенный пароль
@@ -40,7 +40,6 @@ class UserView(APIView):
     def post(self, request):
         try:
             user_data = {
-                'login': request.data.get('login'),
                 'email': request.data.get('email'),
                 'password': request.data.get('password')  # Хешируем пароль
             }

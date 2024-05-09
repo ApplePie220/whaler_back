@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-hg5-%j-mi06e3l%7ol7u5spes9^ry4q0s2d5uucf@y&4fake&w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '46.138.176.151']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'kubernetes.docker.internal:8000']
 # ALLOWED_HOSTS = []
 
 
@@ -65,6 +65,7 @@ ROOT_URLCONF = 'django_test_serv.urls'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
+    "http://localhost:5173",
     "http://192.168.1.3"# Укажите здесь ваш фронтенд домен
 ]
 
