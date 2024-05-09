@@ -1,11 +1,13 @@
 from django.shortcuts import render
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from django.contrib.auth.hashers import check_password
 from rest_framework.response import Response
 from .serialaizer import UserSerializer
 from .models import User
-import logging
-import uuid
+from .parser import DockerfileParser
+import json
+import os
+
 
 
 
@@ -15,9 +17,8 @@ class UserRegistration(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
-        session_id = str(uuid.uuid4())
-        response.data['session_id'] = session_id
-        response.status_code = 201
+        request.session.save()  # Save the session to generate a session ID
+        response.set_cookie('sessionid', request.session.session_key)  # Set the session ID in the response headers
         return response
 
 class UserLogin(generics.GenericAPIView):
@@ -34,8 +35,19 @@ class UserLogin(generics.GenericAPIView):
         
         return Response({'error': 'Invalid credentials'}, status=400)
 
-
-
+class DockerfileGeneratorView(generics.GenericAPIView):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            # parser = DockerfileParser(data)
+            dockerfile = DockerfileParser.generate_dockerfile(data)
+            dockerfile_path = os.path.join('files', 'Dockerfile')
+            with open(dockerfile_path, 'w') as f:
+                f.write(dockerfile)
+            return Response({'message': 'Dockerfile generated successfully'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(e)
+            return Response({'error': 'Failed to generate Dockerfile'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # class UserViewSet(viewsets.ModelViewSet):
 #     queryset = User.objects.all()
