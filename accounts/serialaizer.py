@@ -6,24 +6,26 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    email = serializers.CharField(max_length=40, validators=[UniqueValidator(queryset=User.objects.all())])
     class Meta:
         model = User
         fields = ['email', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
-    def create(self, validated_data):
-        password = validated_data.get('password')
-        email = validated_data.get('email')
+    # def create(self, validated_data):
+    #     password = validated_data.get('password')
+    #     email = validated_data.get('email')
 
-        # Проверяем, существует ли пользователь с таким логином
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError("Пользователь с таким email уже существует")
+    #     # # Проверяем, существует ли пользователь с таким логином
+    #     # if User.objects.filter(email=email).exists():
+    #     #     print(1)
+    #     #     raise serializers.ValidationError("Пользователь с таким email уже существует")
 
-        user = User.objects.create(email=email)
-        user.set_password(password)
-        user.save()
-        return user
+    #     print(password)
+    #     user = User.objects.create(email=email)
+    #     print(email)
+    #     user.set_password(password)
+    #     user.save()
+    #     return user
 
 # class FileSerializer(serializers.ModelSerializer):
 #     class Meta:

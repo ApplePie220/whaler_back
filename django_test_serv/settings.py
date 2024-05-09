@@ -104,7 +104,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'djongo',
         'NAME': 'db',
-        'ENFORCE_SCHEMA': False,
+        'ENFORCE_SCHEMA': True,
         'CLIENT': {
             'host': 'mongodb://localhost:27017/',
             'username': 'username',
