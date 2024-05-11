@@ -35,6 +35,73 @@ class DockerfileParser:
         
         return dockerfile_input 
     
+class DockerfileToJsonParser:
+    def parse_dockerfile_to_json(dockerfile_input):
+        lines = dockerfile_input.split('\n')
+        nodes = []
+        edges = []
+
+        prev_node_index = None
+        input_node_id = None
+
+        for line in lines:
+            parts = line.split()
+            if len(parts) >= 2:
+                label = parts[0]
+                parameters = ' '.join(parts[1:])
+                position_x = 800
+                position_y = 0
+
+                if prev_node_index is not None:
+                    position_x = nodes[prev_node_index]["position"]["x"]
+                    position_y = nodes[prev_node_index]["position"]["y"] + 100
+
+                node_id = f"dndnode_{len(nodes)}"
+
+                if label == "FROM":
+                    node_type = "input"
+                    input_node_id = node_id
+                elif label == "CMD":
+                    node_type = "output"
+                else:
+                    node_type = "default"
+
+                node = {
+                    "id": node_id,
+                    "type": node_type,
+                    "position": {
+                        "x": position_x,
+                        "y": position_y
+                    },
+                    "data": {
+                        "toolbarPosition": "left"
+                    },
+                    "label": label,
+                    "parameters": parameters
+                }
+
+                nodes.append(node)
+
+                if prev_node_index is not None:
+                    edge = {
+                        "id": f"edge_{len(edges)}",
+                        "source": nodes[prev_node_index]["id"],
+                        "target": node_id
+                    }
+                    edges.append(edge)
+
+                prev_node_index = len(nodes) - 1
+
+        # Adding edge from input node to the first node
+        if input_node_id:
+            edge = {
+                "id": f"edge_{len(edges)}",
+                "source": input_node_id,
+                "target": nodes[0]["id"]
+            }
+            edges.append(edge)
+
+        return {"nodes": nodes, "edges": edges}
 
 class DockercomposeParser:
     def parse_json_to_docker_compose(json_data):

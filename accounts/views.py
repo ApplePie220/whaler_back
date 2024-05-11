@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from .serialaizer import UserSerializer
 from .models import User
-from .parser import DockerfileParser, DockercomposeParser
+from .parser import DockerfileParser, DockercomposeParser, DockerfileToJsonParser
 import json
 import yaml
 import uuid 
@@ -61,6 +61,25 @@ class UserLogout(generics.GenericAPIView):
         response.delete_cookie('sessionid')
 
         return response
+
+# парсер из dockerfile в json
+class DockerfileToJsonView(generics.GenericAPIView):
+    def post(self, request):
+        try:
+            dockerfile_input = """
+            FROM ubuntu
+            COPY . /app
+            ADD . /app/app
+            CMD ["python"]
+            """
+            if dockerfile_input:
+                json_data = DockerfileToJsonParser.parse_dockerfile_to_json(dockerfile_input)
+                return Response(json_data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Dockerfile data not provided'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response({'error': 'Failed to parse Dockerfile'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # парсер и сохранения dockerfile
