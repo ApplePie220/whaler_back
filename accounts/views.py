@@ -1,16 +1,20 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions, status
 from django.contrib.auth.hashers import check_password
+from django.contrib.sessions.models import Session
 from rest_framework.response import Response
+from django.http import JsonResponse
 from .serialaizer import UserSerializer
 from .models import User
-from .parser import DockerfileParser
+from .parser import DockerfileParser, DockercomposeParser
 import json
+import yaml
+import uuid 
 import os
 
 
 
-
+#регистрация пользователя на сайте
 class UserRegistration(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = UserSerializer
@@ -21,6 +25,7 @@ class UserRegistration(generics.CreateAPIView):
         response.set_cookie('sessionid', request.session.session_key)  # Set the session ID in the response headers
         return response
 
+#авторизация пользователя на сайте
 class UserLogin(generics.GenericAPIView):
     serializer_class = UserSerializer
 
@@ -31,17 +36,41 @@ class UserLogin(generics.GenericAPIView):
         if email and password:
             user = User.objects.filter(email=email).first()
             if user and check_password(password, user.password):
+                user_id = user.id
+                request.session['user_id'] = user_id
                 return Response({'message': 'Login successful'}, status=200)
         
         return Response({'error': 'Invalid credentials'}, status=400)
 
+# выход пользователя с сайта
+class UserLogout(generics.GenericAPIView):
+    def post(self, request):
+        # Получаем идентификатор сессии из куки
+        session_id = request.COOKIES.get('sessionid')
+
+        # Если идентификатор сессии есть, удаляем сессию из базы данных
+        if session_id:
+            try:
+                session = Session.objects.get(session_key=session_id)
+                session.delete()
+            except Session.DoesNotExist:
+                pass
+
+        # Очищаем куки
+        response = JsonResponse({"message": "Logged out successfully"})
+        response.delete_cookie('sessionid')
+
+        return response
+
+
+# парсер и сохранения dockerfile
 class DockerfileGeneratorView(generics.GenericAPIView):
     def post(self, request):
         try:
             data = json.loads(request.body)
             # parser = DockerfileParser(data)
-            dockerfile = DockerfileParser.generate_dockerfile(data)
-            dockerfile_path = os.path.join('files', 'Dockerfile')
+            dockerfile = DockerfileParser.parse_json_to_dockerfile(data)
+            dockerfile_path = os.path.join('dockerfiles', 'Dockerfile')
             with open(dockerfile_path, 'w') as f:
                 f.write(dockerfile)
             return Response({'message': 'Dockerfile generated successfully'}, status=status.HTTP_201_CREATED)
@@ -49,63 +78,39 @@ class DockerfileGeneratorView(generics.GenericAPIView):
             print(e)
             return Response({'error': 'Failed to generate Dockerfile'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# class UserViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     serializer_class = UserSerializer
 
+# парсер и сохранения docker-compose.yml
+class DockerComposeGeneratorView(generics.GenericAPIView):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            docker_compose = DockercomposeParser.parse_json_to_docker_compose(data)
+            docker_compose_path = os.path.join('dockercomposefiles', 'docker-compose.yml')
+            with open(docker_compose_path, 'w') as f:
+                yaml.dump(docker_compose, f, indent=4)
+            return Response({'message': 'docker-compose.yml has been generated and saved successfully'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(e)
+            return Response({'error': 'Failed to generate docker-compose.yml'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# class AuthUser(generics.GenericAPIView):
-#     permission_classes = []
-#     serializer_class = UserSerializer
-
+# class DockerfileGeneratorView1(generics.GenericAPIView):
 #     def post(self, request):
 #         try:
-#             email = request.GET.get('email')
-#             password = request.GET.get('password')
-            
-#             if email and password:
-#                 user = User.objects.filter(email=email).first()
-#                 if user and user.check_password(password):
-#                     return Response(status=status.HTTP_200_OK)
-#                 else:
-#                     return Response({"error": "Неверный пароль или пользователь не найден"}, status=status.HTTP_401_UNAUTHORIZED)
+#             data = json.loads(request.body)
+#             user_id = request.session.get('user_id')
+#             if user_id:
+#                 user_folder = os.path.join('dockerfiles', str(user_id))
+#                 os.makedirs(user_folder, exist_ok=True)
+#                 # Генерируем уникальное имя для Dockerfile с помощью UUID
+#                 dockerfile_name = f'Dockerfile_{uuid.uuid4().hex[:8]}'  # Пример: Dockerfile_12345678
+#                 dockerfile_path = os.path.join(user_folder, dockerfile_name)
+#                 dockerfile = DockerfileParser.parse_json_to_dockerfile(data)
+#                 with open(dockerfile_path, 'w') as f:
+#                     f.write(dockerfile)
+#                 return Response({'message': 'Dockerfile успешно создан и сохранен'}, status=status.HTTP_201_CREATED)
 #             else:
-#                 return Response({"error": "Должны быть заполнены все поля"}, status=status.HTTP_404_NOT_FOUND)
+#                 return Response({'error': 'Пользователь не авторизован'}, status=status.HTTP_401_UNAUTHORIZED)
 #         except Exception as e:
-#             return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#             print(e)
+#             return Response({'error': 'Ошибка при создании Dockerfile'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# class UserView(generics.CreateAPIView):
-#     permission_classes = (permissions.AllowAny,)
-#     serializer_class = UserSerializer
-    # permission_classes = []
-
-    # def post(self, request):
-    #     try:
-    #         user_data = {
-    #             'email': request.data.get('email'),
-    #             'password': request.data.get('password')  # Хешируем пароль
-    #         }
-
-    #         user_serializer = UserSerializer(data=user_data)
-    #         if user_serializer.is_valid(raise_exception=True):
-    #             user = user_serializer.save()
-    #             if user:
-    #                 session_id = str(uuid.uuid4())
-
-    #                 # Устанавливаем куки в ответе
-    #                 response = Response("Пользователь успешно создан", status=status.HTTP_201_CREATED)
-    #                 response.set_cookie('sessionId', session_id)
-    #                 return response
-
-    #         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #     except Exception as e:
-    #         logging.error(f"An error occurred while creating user: {str(e)}")
-    #         return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# @api_view(['POST'])
-# def createUser(request):
-
-
-# class FileViewSet(viewsets.ModelViewSet):
-#     queryset = File.objects.all()
-#     serializer_class = FileSerializer

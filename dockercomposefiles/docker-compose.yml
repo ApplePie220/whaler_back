@@ -1,0 +1,7 @@
+services:
+    postgres:
+        restart: always
+    web:
+        build: .
+        image: node
+version: '3'
