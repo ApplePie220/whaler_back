@@ -147,3 +147,94 @@ class DockercomposeParser:
 
         return docker_compose
 
+class DockercomposeToJsonParser:
+    @staticmethod
+    def parse_dockercompose_to_json(dockercompose_input):
+        try:
+            docker_compose = yaml.safe_load(dockercompose_input)
+            services = docker_compose.get("services", {})
+
+            nodes = []
+            edges = []
+            y_position_service = 0  # Инициализируем начальную позицию y для сервисов
+            y_position_others = 200  # Инициализируем начальную позицию y для остальных узлов
+            x_position = 890  # Инициализируем начальную позицию x
+
+            # Создаем узел для инструкции "services"
+            services_node_id = f"dndnode_{len(nodes)}"
+            services_node = {
+                "id": services_node_id,
+                "type": "input",
+                "position": {
+                    "x": 800,
+                    "y": y_position_service  # Установим начальную позицию y для сервисов
+                },
+                "data": {
+                    "toolbarPosition": "left"
+                },
+                "label": "Services",
+                "parameters": ""
+            }
+            nodes.append(services_node)
+            y_position_service += 100  # Увеличим позицию y для сервисов на 100
+
+            # Создаем узлы для каждого сервиса и добавляем связь к ним из узла "Services"
+            for service_name, service_config in services.items():
+                # Создаем узел для сервиса
+                service_node_id = f"dndnode_{len(nodes)}"
+                service_node = {
+                    "id": service_node_id,
+                    "type": "default",
+                    "position": {
+                        "x": x_position,  # Установим позицию x для сервиса
+                        "y": y_position_service  # Установим позицию y для сервиса
+                    },
+                    "data": {
+                        "toolbarPosition": "left"
+                    },
+                    "label": "service",
+                    "parameters": service_name
+                }
+                nodes.append(service_node)
+                x_position += 120  # Увеличим позицию x на 120 для следующего узла
+                y_position_service += 0  # Позиция y останется неизменной для следующего сервиса
+
+                # Создаем связь между узлом "Services" и узлом сервиса
+                edge = {
+                    "id": f"edge_{len(edges)}",
+                    "source": services_node_id,
+                    "target": service_node_id
+                }
+                edges.append(edge)
+
+                # Добавляем узлы для параметров
+                for key, value in service_config.items():
+                    node_id = f"dndnode_{len(nodes)}"
+                    node = {
+                        "id": node_id,
+                        "type": "output",
+                        "position": {
+                            "x": x_position,  # Установим позицию x для следующего узла
+                            "y": y_position_others  # Установим позицию y для следующего узла
+                        },
+                        "data": {
+                            "toolbarPosition": "left"
+                        },
+                        "label": key,
+                        "parameters": value
+                    }
+                    nodes.append(node)
+                    x_position += 160  # Увеличим позицию x на 120 для следующего узла
+
+                    # Добавляем связь между сервисом и соответствующим узлом
+                    edge = {
+                        "id": f"edge_{len(edges)}",
+                        "source": service_node_id,
+                        "target": node_id
+                    }
+                    edges.append(edge)
+
+            return {"nodes": nodes, "edges": edges}
+        except Exception as e:
+            print(e)
+            raise ValueError("Failed to parse docker-compose.yml")

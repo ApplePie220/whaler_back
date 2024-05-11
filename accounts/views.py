@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from .serialaizer import UserSerializer
 from .models import User
-from .parser import DockerfileParser, DockercomposeParser, DockerfileToJsonParser
+from .parser import DockerfileParser, DockercomposeParser, DockerfileToJsonParser, DockercomposeToJsonParser
 import json
 import yaml
 import uuid 
@@ -80,6 +80,29 @@ class DockerfileToJsonView(generics.GenericAPIView):
         except Exception as e:
             print(e)
             return Response({'error': 'Failed to parse Dockerfile'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# парсер из docker-compose.yml в json
+class DockerCompToJsonView(generics.GenericAPIView):
+    def post(self, request):
+        try:
+            dockercompose_input = """
+            services:
+                postgres:
+                    restart: always
+                web:
+                    build: .
+                    image: node
+            version: '3'
+            """
+            if dockercompose_input:
+                json_data = DockercomposeToJsonParser.parse_dockercompose_to_json(dockercompose_input)
+                return Response(json_data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Dockercompose data not provided'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response({'error': 'Failed to parse Dockercompose'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # парсер и сохранения dockerfile
