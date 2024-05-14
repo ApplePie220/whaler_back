@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '46.138.176.151']
 # ALLOWED_HOSTS = []
 
-
+MAX_USER_FILE = 30
 # Application definition
 
 INSTALLED_APPS = [
