@@ -61,7 +61,7 @@ class DockerfileToJsonParser:
                 if label == "FROM":
                     node_type = "input"
                     input_node_id = node_id
-                elif label == "CMD":
+                elif label == "CMD" or label == "ENTRYPOINT":
                     node_type = "output"
                 else:
                     node_type = "default"

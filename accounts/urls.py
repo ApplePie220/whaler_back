@@ -10,3 +10,4 @@ urlpatterns = [
         path('dockerfile-to-json/', DockerfileToJsonView.as_view(), name='dockfile-tojson'),
         path('dockercompose-to-json/', DockerCompToJsonView.as_view(), name='dockcompose-tojson'),
 ]
+
